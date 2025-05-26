@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+html,
+body,
+#root {
+  @apply bg-neutral-800 overflow-x-hidden p-0 m-0 h-full;
+}
