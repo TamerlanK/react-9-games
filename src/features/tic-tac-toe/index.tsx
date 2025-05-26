@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react"
 import { MdKeyboardArrowDown } from "react-icons/md"
 import {
   DIFFICULTY,
-  DIFFICULTY_OPTIONS,
   type Board,
   type Difficulty,
   type Winner,
@@ -202,9 +201,9 @@ const TicTacToePage = () => {
                     handleDifficultyChange(e.target.value as Difficulty)
                   }
                 >
-                  {Object.entries(DIFFICULTY_OPTIONS).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
+                  {Object.values(DIFFICULTY).map((value) => (
+                    <option key={value} value={value}>
+                      {value.charAt(0).toUpperCase() + value.slice(1)}
                     </option>
                   ))}
                 </select>

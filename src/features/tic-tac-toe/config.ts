@@ -5,13 +5,6 @@ export const DIFFICULTY = {
   Impossible: "impossible",
 } as const
 
-export const DIFFICULTY_OPTIONS: Record<Difficulty, string> = {
-  [DIFFICULTY.Easy]: "Easy",
-  [DIFFICULTY.Medium]: "Medium",
-  [DIFFICULTY.Hard]: "Hard",
-  [DIFFICULTY.Impossible]: "Impossible",
-}
-
 export const WINNING_COMBOS: number[][] = [
   [0, 1, 2],
   [3, 4, 5],
