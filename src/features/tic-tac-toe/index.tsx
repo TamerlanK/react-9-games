@@ -1,39 +1,16 @@
 import { cn } from "@/lib/utils"
+import { AnimatePresence, motion } from "framer-motion"
 import { useCallback, useEffect, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import { MdKeyboardArrowDown } from "react-icons/md"
-
-const DIFFICULTY = {
-  Easy: "easy",
-  Medium: "medium",
-  Hard: "hard",
-  Impossible: "impossible",
-} as const
-
-const DIFFICULTY_OPTIONS: Record<Difficulty, string> = {
-  [DIFFICULTY.Easy]: "Easy",
-  [DIFFICULTY.Medium]: "Medium",
-  [DIFFICULTY.Hard]: "Hard",
-  [DIFFICULTY.Impossible]: "Impossible",
-}
-
-type Difficulty = (typeof DIFFICULTY)[keyof typeof DIFFICULTY]
-
-type Player = "X" | "O" | null
-type Board = Player[]
-type Winner = Player | "Draw" | null
-type WinningCombo = number[] | null
-
-const WINNING_COMBOS: number[][] = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6],
-]
+import {
+  DIFFICULTY,
+  DIFFICULTY_OPTIONS,
+  type Board,
+  type Difficulty,
+  type Winner,
+  type WinningCombo,
+} from "./config"
+import { checkWinner, getBestMove, getRandomMove } from "./utils"
 
 const TicTacToePage = () => {
   const [board, setBoard] = useState<Board>(Array(9).fill(null))
@@ -44,26 +21,6 @@ const TicTacToePage = () => {
   const [gameStarted, setGameStarted] = useState<boolean>(false)
   const [score, setScore] = useState<{ X: number; O: number }>({ X: 0, O: 0 })
   const [difficulty, setDifficulty] = useState<Difficulty>(DIFFICULTY.Easy)
-
-  const checkWinner = useCallback(
-    (currentBoard: Board): { winner: Winner; combo: WinningCombo } => {
-      for (const combo of WINNING_COMBOS) {
-        const [a, b, c] = combo
-        if (
-          currentBoard[a] &&
-          currentBoard[a] === currentBoard[b] &&
-          currentBoard[a] === currentBoard[c]
-        ) {
-          return { winner: currentBoard[a], combo }
-        }
-      }
-      return {
-        winner: currentBoard.every((cell) => cell !== null) ? "Draw" : null,
-        combo: null,
-      }
-    },
-    []
-  )
 
   const handleCellClick = useCallback(
     (index: number, isComputer: boolean = false): void => {
@@ -79,10 +36,13 @@ const TicTacToePage = () => {
       setWinningCombo(combo)
 
       if (gameWinner === "X" || gameWinner === "O") {
-        setScore((prev) => ({ ...prev, [gameWinner]: prev[gameWinner] + 1 }))
+        setScore((prev) => ({
+          ...prev,
+          [gameWinner as "X" | "O"]: prev[gameWinner as "X" | "O"] + 1,
+        }))
       }
     },
-    [board, isXNext, winner, gameStarted, checkWinner]
+    [board, isXNext, winner, gameStarted]
   )
 
   const handleDifficultyChange = useCallback(
@@ -93,87 +53,27 @@ const TicTacToePage = () => {
     []
   )
 
-  const minimax = useCallback(
-    (currentBoard: Board, depth: number, isMaximizing: boolean): number => {
-      const { winner: boardWinner } = checkWinner(currentBoard)
-      if (boardWinner === "O") return 10 - depth
-      if (boardWinner === "X") return depth - 10
-      if (boardWinner === "Draw") return 0
-
-      const scores: number[] = []
-      const availableIndices = currentBoard
-        .map((cell, idx) => (cell === null ? idx : null))
-        .filter((idx): idx is number => idx !== null)
-
-      for (const idx of availableIndices) {
-        currentBoard[idx] = isMaximizing ? "O" : "X"
-        const score = minimax(currentBoard, depth + 1, !isMaximizing)
-        scores.push(score)
-        currentBoard[idx] = null
-      }
-
-      return isMaximizing ? Math.max(...scores) : Math.min(...scores)
-    },
-    [checkWinner]
-  )
-
-  const getBestMove = useCallback(
-    (currentBoard: Board): number => {
-      let bestScore = -Infinity
-      let move = -1
-      const availableIndices = currentBoard
-        .map((cell, idx) => (cell === null ? idx : null))
-        .filter((idx): idx is number => idx !== null)
-
-      for (const idx of availableIndices) {
-        currentBoard[idx] = "O"
-        const score = minimax(currentBoard, 0, false)
-        currentBoard[idx] = null
-        if (score > bestScore) {
-          bestScore = score
-          move = idx
-        }
-      }
-
-      return move
-    },
-    [minimax]
-  )
-
-  const getRandomMove = (currentBoard: Board): number => {
-    const available = currentBoard
-      .map((cell, idx) => (cell === null ? idx : null))
-      .filter((idx): idx is number => idx !== null)
-    return available[Math.floor(Math.random() * available.length)]
-  }
-
   const makeComputerMove = useCallback(
-    (currentBoard: Board): void => {
+    (currentBoard: Board) => {
       if (!gameStarted) return
-      let chosenIndex: number
-      switch (difficulty) {
-        case DIFFICULTY.Easy:
-          chosenIndex = getRandomMove(currentBoard)
-          break
-        case DIFFICULTY.Medium:
-          chosenIndex =
-            Math.random() < 0.7
-              ? getRandomMove(currentBoard)
-              : getBestMove(currentBoard)
-          break
-        case DIFFICULTY.Hard:
-          chosenIndex =
-            Math.random() < 0.3
-              ? getRandomMove(currentBoard)
-              : getBestMove(currentBoard)
-          break
-        case DIFFICULTY.Impossible:
-        default:
-          chosenIndex = getBestMove(currentBoard)
+
+      const movePicker = {
+        [DIFFICULTY.Easy]: () => getRandomMove(currentBoard),
+        [DIFFICULTY.Medium]: () =>
+          Math.random() < 0.7
+            ? getRandomMove(currentBoard)
+            : getBestMove(currentBoard),
+        [DIFFICULTY.Hard]: () =>
+          Math.random() < 0.3
+            ? getRandomMove(currentBoard)
+            : getBestMove(currentBoard),
+        [DIFFICULTY.Impossible]: () => getBestMove(currentBoard),
       }
+
+      const chosenIndex = movePicker[difficulty]()
       handleCellClick(chosenIndex, true)
     },
-    [handleCellClick, difficulty, gameStarted, getBestMove]
+    [difficulty, gameStarted, handleCellClick]
   )
 
   const handleModeSelect = (computerMode: boolean): void => {
@@ -197,29 +97,32 @@ const TicTacToePage = () => {
     }
   }, [isXNext, board, isComputerMode, winner, gameStarted, makeComputerMove])
 
-  const renderCell = (index: number) => (
-    <motion.button
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      transition={{ type: "spring", stiffness: 260, damping: 20 }}
-      className={cn(
-        "w-20 h-20 text-3xl font-bold text-white flex items-center justify-center rounded-md shadow-md cursor-pointer",
-        winningCombo && winningCombo.includes(index)
-          ? "bg-green-600 hover:bg-green-600"
-          : "bg-neutral-900 hover:bg-neutral-900/50"
-      )}
-      onClick={() => handleCellClick(index)}
-      disabled={board[index] !== null || winner !== null || !gameStarted}
-    >
-      <motion.span
-        key={board[index]}
-        initial={{ opacity: 0, scale: 0.5 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
+  const renderCell = useCallback(
+    (index: number) => (
+      <motion.button
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+        className={cn(
+          "w-20 h-20 text-3xl font-bold text-white flex items-center justify-center rounded-md shadow-md cursor-pointer",
+          winningCombo && winningCombo.includes(index)
+            ? "bg-green-600 hover:bg-green-600"
+            : "bg-neutral-900 hover:bg-neutral-900/50"
+        )}
+        onClick={() => handleCellClick(index)}
+        disabled={board[index] !== null || winner !== null || !gameStarted}
       >
-        {board[index]}
-      </motion.span>
-    </motion.button>
+        <motion.span
+          key={board[index]}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          {board[index]}
+        </motion.span>
+      </motion.button>
+    ),
+    [board, winningCombo, handleCellClick, winner, gameStarted]
   )
 
   return (
