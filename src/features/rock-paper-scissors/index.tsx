@@ -231,7 +231,12 @@ const RockPaperScissorsPage = () => {
               aria-label={`Choose ${choice}`}
               disabled={isShaking}
             >
-              <Icon size={32} />
+              <Icon
+                size={32}
+                className={cn(
+                  choice === "Scissors" ? "transform -scale-x-100" : "rotate-90"
+                )}
+              />
             </motion.button>
           )
         })}
