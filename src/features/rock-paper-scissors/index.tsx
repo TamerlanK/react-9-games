@@ -2,58 +2,15 @@ import { cn } from "@/lib/utils"
 import { AnimatePresence, motion } from "framer-motion"
 import { useCallback, useEffect, useState } from "react"
 import { FaHandPaper, FaHandRock, FaHandScissors } from "react-icons/fa"
-
-const CHOICES = ["Rock", "Paper", "Scissors"] as const
-type Choice = (typeof CHOICES)[number]
-type Result = "Win" | "Lose" | "Draw" | null
-
-const getResult = (player: Choice, computer: Choice): Result => {
-  if (player === computer) return "Draw"
-  if (
-    (player === "Rock" && computer === "Scissors") ||
-    (player === "Paper" && computer === "Rock") ||
-    (player === "Scissors" && computer === "Paper")
-  )
-    return "Win"
-  return "Lose"
-}
-
-const getStyle = (result: Result) => {
-  switch (result) {
-    case "Win":
-      return "text-green-400"
-    case "Lose":
-      return "text-red-400"
-    case "Draw":
-      return "text-yellow-400"
-    default:
-      return ""
-  }
-}
-
-const getText = (result: Result) => {
-  switch (result) {
-    case "Win":
-      return "You Win!"
-    case "Lose":
-      return "You Lose!"
-    case "Draw":
-      return "It's a Draw!"
-    default:
-      return ""
-  }
-}
-
-const shakeVariant = {
-  rest: { y: 0 },
-  shake: {
-    y: [0, 20, 0, 20, 0, 20, 0],
-    transition: {
-      duration: 1.5,
-      ease: "easeInOut",
-    },
-  },
-}
+import {
+  CHOICES,
+  type Choice,
+  type Result,
+  getResult,
+  getStyle,
+  getText,
+  shakeVariant,
+} from "./utils"
 
 const RockPaperScissorsPage = () => {
   const [playerChoice, setPlayerChoice] = useState<Choice | null>(null)
