@@ -5,3 +5,11 @@ body,
 #root {
   @apply bg-neutral-800 overflow-x-hidden p-0 m-0 h-full;
 }
+
+.cursor-x {
+  cursor: url("/x.svg") 16 16, auto;
+}
+
+.cursor-o {
+  cursor: url("/o.svg") 16 16, auto;
+}

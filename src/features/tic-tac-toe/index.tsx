@@ -3,16 +3,21 @@ import { AnimatePresence, motion } from "framer-motion"
 import { useCallback, useEffect, useState } from "react"
 import { MdKeyboardArrowDown } from "react-icons/md"
 import {
+  BOARD_SIZE,
   DIFFICULTY,
+  HARD_RANDOM_CHANCE,
+  MEDIUM_RANDOM_CHANCE,
   type Board,
   type Difficulty,
+  type RequiredPlayer,
   type Winner,
   type WinningCombo,
 } from "./config"
-import { checkWinner, getBestMove, getRandomMove } from "./utils"
+import { checkWinner, clearCache, getBestMove, getRandomMove } from "./utils"
+import { OIcon, XIcon } from "@/components/Icons"
 
 const TicTacToePage = () => {
-  const [board, setBoard] = useState<Board>(Array(9).fill(null))
+  const [board, setBoard] = useState<Board>(Array(BOARD_SIZE).fill(null))
   const [isXNext, setIsXNext] = useState<boolean>(true)
   const [winner, setWinner] = useState<Winner>(null)
   const [winningCombo, setWinningCombo] = useState<WinningCombo>(null)
@@ -23,7 +28,13 @@ const TicTacToePage = () => {
 
   const handleCellClick = useCallback(
     (index: number, isComputer: boolean = false): void => {
-      if (board[index] || winner || (!isComputer && !gameStarted)) return
+      if (
+        board[index] ||
+        winner ||
+        !gameStarted ||
+        (!isComputer && isComputerMode && !isXNext)
+      )
+        return
 
       const newBoard = [...board]
       newBoard[index] = isXNext ? "X" : "O"
@@ -37,11 +48,12 @@ const TicTacToePage = () => {
       if (gameWinner === "X" || gameWinner === "O") {
         setScore((prev) => ({
           ...prev,
-          [gameWinner as "X" | "O"]: prev[gameWinner as "X" | "O"] + 1,
+          [gameWinner as RequiredPlayer]:
+            prev[gameWinner as RequiredPlayer] + 1,
         }))
       }
     },
-    [board, isXNext, winner, gameStarted]
+    [board, isXNext, winner, gameStarted, isComputerMode]
   )
 
   const handleDifficultyChange = useCallback(
@@ -59,11 +71,11 @@ const TicTacToePage = () => {
       const movePicker = {
         [DIFFICULTY.Easy]: () => getRandomMove(currentBoard),
         [DIFFICULTY.Medium]: () =>
-          Math.random() < 0.7
+          Math.random() < MEDIUM_RANDOM_CHANCE
             ? getRandomMove(currentBoard)
             : getBestMove(currentBoard),
         [DIFFICULTY.Hard]: () =>
-          Math.random() < 0.3
+          Math.random() < HARD_RANDOM_CHANCE
             ? getRandomMove(currentBoard)
             : getBestMove(currentBoard),
         [DIFFICULTY.Impossible]: () => getBestMove(currentBoard),
@@ -83,6 +95,7 @@ const TicTacToePage = () => {
   }
 
   const resetGame = (): void => {
+    clearCache()
     setBoard(Array(9).fill(null))
     setIsXNext(true)
     setWinner(null)
@@ -90,26 +103,44 @@ const TicTacToePage = () => {
   }
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout
+
     if (isComputerMode && !isXNext && !winner && gameStarted) {
-      const timer = setTimeout(() => makeComputerMove(board), 500)
-      return () => clearTimeout(timer)
+      timeoutId = setTimeout(() => makeComputerMove(board), 500)
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId)
     }
   }, [isXNext, board, isComputerMode, winner, gameStarted, makeComputerMove])
+
+  const cursorClass =
+    winner || !gameStarted
+      ? "cursor-default"
+      : isComputerMode
+      ? "cursor-x"
+      : isXNext
+      ? "cursor-x"
+      : "cursor-o"
 
   const renderCell = useCallback(
     (index: number) => (
       <motion.button
+        key={index}
+        aria-label={`Cell ${index}, ${board[index] || "empty"}`}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
         className={cn(
-          "w-20 h-20 text-3xl font-bold text-white flex items-center justify-center rounded-md shadow-md cursor-pointer",
+          "w-20 h-20 text-3xl font-bold text-white flex items-center justify-center rounded-md shadow-md",
           winningCombo && winningCombo.includes(index)
             ? "bg-green-600 hover:bg-green-600"
-            : "bg-neutral-900 hover:bg-neutral-900/50"
+            : "bg-neutral-900 hover:bg-neutral-900/50",
+          cursorClass
         )}
         onClick={() => handleCellClick(index)}
         disabled={board[index] !== null || winner !== null || !gameStarted}
+        whileHover={{ scale: board[index] || winner ? 1 : 1.05 }}
       >
         <motion.span
           key={board[index]}
@@ -117,11 +148,12 @@ const TicTacToePage = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
         >
-          {board[index]}
+          {board[index] === "X" && <XIcon />}
+          {board[index] === "O" && <OIcon />}
         </motion.span>
       </motion.button>
     ),
-    [board, winningCombo, handleCellClick, winner, gameStarted]
+    [board, winningCombo, handleCellClick, winner, gameStarted, cursorClass]
   )
 
   return (
@@ -171,7 +203,7 @@ const TicTacToePage = () => {
                 O - {score.O}
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-2 mb-6">
+            <div className={cn("grid grid-cols-3 gap-2 mb-6", cursorClass)}>
               {board.map((_, index) => renderCell(index))}
             </div>
 

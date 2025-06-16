@@ -22,6 +22,10 @@ export const checkWinner = (
 type CacheKey = string
 const cache = new Map<CacheKey, number>()
 
+export const clearCache = (): void => {
+  cache.clear()
+}
+
 const serializeBoard = (board: Board): string =>
   board.map((cell) => cell ?? "-").join("")
 
