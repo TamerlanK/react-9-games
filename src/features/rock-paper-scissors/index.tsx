@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 import { AnimatePresence, motion } from "framer-motion"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { FaHandPaper, FaHandRock, FaHandScissors } from "react-icons/fa"
 import {
   CHOICES,
@@ -39,11 +39,14 @@ const RockPaperScissorsPage = () => {
     setScore({ player: 0, computer: 0 })
   }
 
-  const choiceIcons = {
-    Rock: FaHandRock,
-    Paper: FaHandPaper,
-    Scissors: FaHandScissors,
-  }
+  const choiceIcons = useMemo(
+    () => ({
+      Rock: FaHandRock,
+      Paper: FaHandPaper,
+      Scissors: FaHandScissors,
+    }),
+    []
+  )
 
   useEffect(() => {
     if (!isShaking && playerChoice && computerChoice && result === null) {
@@ -183,7 +186,9 @@ const RockPaperScissorsPage = () => {
                 boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.2)",
               }}
               whileTap={{ scale: 0.95 }}
-              className="bg-neutral-900 hover:bg-neutral-700/50 text-white p-4 rounded-full shadow-md cursor-pointer"
+              className={
+                "bg-neutral-900 hover:bg-neutral-700/50 text-white p-4 rounded-full shadow-md cursor-pointer disabled:cursor-not-allowed"
+              }
               onClick={() => playRound(choice)}
               aria-label={`Choose ${choice}`}
               disabled={isShaking}

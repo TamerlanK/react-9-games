@@ -14,6 +14,8 @@ export const shakeVariant = {
 }
 
 export const getResult = (player: Choice, computer: Choice): Result => {
+  if (!player || !computer) return null
+
   if (player === computer) return "Draw"
   if (
     (player === "Rock" && computer === "Scissors") ||
@@ -40,9 +42,9 @@ export const getStyle = (result: Result) => {
 export const getText = (result: Result) => {
   switch (result) {
     case "Win":
-      return "You Win!"
+      return "You Won!"
     case "Lose":
-      return "You Lose!"
+      return "You Lost!"
     case "Draw":
       return "It's a Draw!"
     default:
