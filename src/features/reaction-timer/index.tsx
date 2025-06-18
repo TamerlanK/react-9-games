@@ -1,13 +1,14 @@
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { MAX_RECORDS, type Status } from "./config"
 import {
+  getBackgroundStyle,
   getMessage,
   getRandomDelay,
   getReactionMessage,
   getReactionTime,
-  getStatusStyle,
+  getStatusTextStyle,
 } from "./utils"
 
 const ReactionTimerPage = () => {
@@ -30,7 +31,7 @@ const ReactionTimerPage = () => {
     setTimeoutId(timeout)
   }, [])
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     switch (status) {
       case "waiting":
         startGame()
@@ -51,7 +52,21 @@ const ReactionTimerPage = () => {
       default:
         setStatus("waiting")
     }
-  }
+  }, [status, startGame, timeoutId, startTime])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        e.preventDefault()
+        handleClick()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [handleClick])
 
   const bestTime = reactionTimes.length ? Math.min(...reactionTimes) : null
   const averageTime = reactionTimes.length
@@ -68,14 +83,17 @@ const ReactionTimerPage = () => {
         transition={{ duration: 0.5 }}
         onClick={handleClick}
         className={cn(
-          "fixed top-0 left-0 w-full h-full flex items-center justify-center cursor-pointer select-none",
-          getStatusStyle(status)
+          "fixed inset-0 flex items-center justify-center cursor-pointer select-none transition-colors duration-300",
+          getBackgroundStyle(status)
         )}
       >
         <span
           className={cn(
-            "text-center text-2xl uppercase font-bold tracking-wider",
-            status === "ready" && "animate-pulse"
+            "text-center px-6 py-4 rounded-xl shadow-lg transition-transform duration-300",
+            "text-lg sm:text-xl md:text-2xl font-extrabold tracking-widest uppercase",
+            "bg-neutral-900/60 backdrop-blur-md",
+            "text-white",
+            getStatusTextStyle(status)
           )}
         >
           {getMessage(status)}

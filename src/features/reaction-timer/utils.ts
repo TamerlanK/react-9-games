@@ -13,17 +13,17 @@ export const getReactionTime = (start: number, end: number): number => {
 export const getMessage = (status: Status): string => {
   switch (status) {
     case "waiting":
-      return "Click to Start"
+      return "Click or press SPACE to Start"
     case "ready":
       return "Wait for Green..."
     case "go":
-      return "CLICK!"
+      return "CLICK or press SPACE!"
     case "tooSoon":
-      return "Too Soon! Click to try again."
+      return "Too Soon! Click or press SPACE to try again."
   }
 }
 
-export const getStatusStyle = (status: Status): string => {
+export const getBackgroundStyle = (status: Status): string => {
   switch (status) {
     case "waiting":
       return ""
@@ -33,6 +33,18 @@ export const getStatusStyle = (status: Status): string => {
       return "bg-green-600"
     case "tooSoon":
       return "bg-red-600"
+  }
+}
+export const getStatusTextStyle = (status: Status): string => {
+  switch (status) {
+    case "waiting":
+      return ""
+    case "ready":
+      return "animate-pulse scale-105 text-yellow-300"
+    case "go":
+      return "text-green-400"
+    case "tooSoon":
+      return "text-red-400"
   }
 }
 
