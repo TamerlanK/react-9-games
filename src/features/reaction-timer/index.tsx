@@ -68,11 +68,18 @@ const ReactionTimerPage = () => {
         transition={{ duration: 0.5 }}
         onClick={handleClick}
         className={cn(
-          "fixed top-0 left-0 w-full h-full flex items-center justify-center text-center text-2xl font-semibold cursor-pointer select-none",
+          "fixed top-0 left-0 w-full h-full flex items-center justify-center cursor-pointer select-none",
           getStatusStyle(status)
         )}
       >
-        {getMessage(status)}
+        <span
+          className={cn(
+            "text-center text-2xl uppercase font-bold tracking-wider",
+            status === "ready" && "animate-pulse"
+          )}
+        >
+          {getMessage(status)}
+        </span>
       </motion.div>
 
       {reactionTime !== null && (
@@ -82,8 +89,8 @@ const ReactionTimerPage = () => {
           transition={{ duration: 0.4 }}
           className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-md px-4"
         >
-          <div className="bg-neutral-900/80 border border-neutral-700 rounded-2xl shadow-xl p-6 space-y-4 backdrop-blur-md">
-            {reactionTimes.length > 1 && (
+          <div className="bg-neutral-900/80 rounded-2xl shadow-xl p-6 space-y-4 backdrop-blur-md">
+            {reactionTimes.length > 0 && (
               <div className="flex gap-6">
                 <div className="grow space-y-4">
                   <div>
