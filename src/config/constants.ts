@@ -20,7 +20,7 @@ export const ROUTES = {
   WHACK_A_MOLE: "/whack-a-mole",
   NUMBER_GUESSING: "/number-guessing",
   REACTION_TIMER: "/reaction-timer",
-  CLICK_COUNT: "/click-count",
+  CATCH_THE_DOT: "/catch-the-dot",
   SEQUENCE_MEMORY: "/sequence-memory",
   TYPING_SPEED: "/typing-speed",
 } as const
@@ -41,8 +41,8 @@ export const games: TGame[] = [
   },
   { title: "Reaction Timer", route: ROUTES.REACTION_TIMER, icon: FaStopwatch },
   {
-    title: "Most Click Count",
-    route: ROUTES.CLICK_COUNT,
+    title: "Catch the Dot",
+    route: ROUTES.CATCH_THE_DOT,
     icon: FaMousePointer,
   },
   { title: "Sequence Memory", route: ROUTES.SEQUENCE_MEMORY, icon: FaBrain },
