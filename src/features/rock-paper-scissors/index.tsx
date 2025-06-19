@@ -7,10 +7,14 @@ import {
   type Choice,
   type Result,
   getResult,
+  getSmartComputerChoice,
   getStyle,
   getText,
   shakeVariant,
 } from "./utils"
+import ToggleSwitch from "@/components/ui/ToggleSwitch"
+import { FiInfo } from "react-icons/fi"
+import Tooltip from "@/components/ui/Tooltip"
 
 const RockPaperScissorsPage = () => {
   const [playerChoice, setPlayerChoice] = useState<Choice | null>(null)
@@ -18,17 +22,25 @@ const RockPaperScissorsPage = () => {
   const [result, setResult] = useState<Result>(null)
   const [score, setScore] = useState({ player: 0, computer: 0 })
   const [isShaking, setIsShaking] = useState(false)
+  const [aiMode, setAiMode] = useState<"random" | "smart">("random")
+  const [playerHistory, setPlayerHistory] = useState<Choice[]>([])
 
   const playRound = useCallback(
     (choice: Choice) => {
       if (isShaking) return
       setPlayerChoice(choice)
-      const compChoice = CHOICES[Math.floor(Math.random() * CHOICES.length)]
+      setPlayerHistory((prev) => [...prev, choice])
+
+      const compChoice =
+        aiMode === "smart"
+          ? getSmartComputerChoice([...playerHistory, choice])
+          : CHOICES[Math.floor(Math.random() * CHOICES.length)]
+
       setComputerChoice(compChoice)
       setResult(null)
       setIsShaking(true)
     },
-    [isShaking]
+    [isShaking, playerHistory, aiMode]
   )
 
   const resetGame = () => {
@@ -37,6 +49,7 @@ const RockPaperScissorsPage = () => {
     setResult(null)
     setIsShaking(false)
     setScore({ player: 0, computer: 0 })
+    setPlayerHistory([])
   }
 
   const choiceIcons = useMemo(
@@ -61,163 +74,189 @@ const RockPaperScissorsPage = () => {
   }, [isShaking, playerChoice, computerChoice, result])
 
   return (
-    <div className="min-h-1/2 bg-neutral-800 flex flex-col items-center justify-between p-4 text-white">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="w-full max-w-md bg-neutral-700/30 rounded-lg p-4 flex justify-between items-center mb-6"
-      >
-        <span className="text-lg font-semibold">You: {score.player}</span>
-        <span className="text-lg font-semibold">
-          Computer: {score.computer}
-        </span>
-      </motion.div>
-
-      <AnimatePresence>
-        {(isShaking || result) && (
+    <div className="flex flex-col text-white">
+      <main className="flex-1 flex flex-col items-center justify-center p-4">
+        <div className="w-full flex flex-col items-center">
           <motion.div
-            key="result"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.4 }}
-            className="flex-1 flex flex-col items-center justify-center w-full max-w-md"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full bg-neutral-700/30 rounded-lg p-4 flex justify-between items-center mb-8"
           >
-            <div className="flex justify-between w-full mb-4">
-              <div className="flex flex-col items-center">
-                <p className="text-lg mb-3">You</p>
-                <AnimatePresence mode="wait">
-                  {isShaking ? (
-                    <motion.div
-                      key="shaking-player"
-                      variants={shakeVariant}
-                      initial="rest"
-                      animate="shake"
-                      exit={{ opacity: 0 }}
-                      onAnimationComplete={() => {
-                        if (isShaking) {
-                          setIsShaking(false)
-                        }
-                      }}
-                    >
-                      <FaHandRock size={48} className="rotate-90" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="choice-player"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
-                      {playerChoice &&
-                        choiceIcons[playerChoice]({
-                          size: 48,
-                          className:
-                            playerChoice === "Scissors"
-                              ? "transform -scale-x-100"
-                              : "rotate-90",
-                        })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-              <div className="flex flex-col items-center">
-                <p className="text-lg mb-3">Computer</p>
-                <AnimatePresence mode="wait">
-                  {isShaking ? (
-                    <motion.div
-                      key="shaking-computer"
-                      variants={shakeVariant}
-                      initial="rest"
-                      animate="shake"
-                      exit={{ opacity: 0 }}
-                    >
-                      <FaHandRock
-                        size={48}
-                        className="transform -scale-x-100 -rotate-90"
-                      />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="choice-computer"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
-                      {computerChoice &&
-                        choiceIcons[computerChoice]({
-                          size: 48,
-                          className:
-                            computerChoice === "Scissors"
-                              ? ""
-                              : "transform -scale-x-100 -rotate-90",
-                        })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-            {result && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className={cn(`text-2xl font-bold mb-6`, getStyle(result))}
-              >
-                {getText(result)}
-              </motion.p>
-            )}
+            <span className="text-xl font-semibold">You: {score.player}</span>
+            <span className="text-xl font-semibold">
+              Computer: {score.computer}
+            </span>
           </motion.div>
-        )}
-      </AnimatePresence>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="w-full max-w-md flex justify-center gap-6 mb-6"
-      >
-        {CHOICES.map((choice) => {
-          const Icon = choiceIcons[choice]
-          return (
-            <motion.button
-              key={choice}
-              whileHover={{
-                scale: 1.1,
-                boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.2)",
-              }}
-              whileTap={{ scale: 0.95 }}
-              className={
-                "bg-neutral-900 hover:bg-neutral-700/50 text-white p-4 rounded-full shadow-md cursor-pointer disabled:cursor-not-allowed"
-              }
-              onClick={() => playRound(choice)}
-              aria-label={`Choose ${choice}`}
-              disabled={isShaking}
-            >
-              <Icon
-                size={32}
-                className={cn(
-                  choice === "Scissors" ? "transform -scale-x-100" : "rotate-90"
-                )}
-              />
-            </motion.button>
-          )
-        })}
-      </motion.div>
-      {result ? (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md flex justify-center mb-6"
-        >
-          <button
-            onClick={resetGame}
-            className="px-4 py-2 bg-neutral-700/50 text-neutral-100 rounded hover:bg-neutral-600/50 cursor-pointer"
+          <div className="w-full flex items-center justify-center min-h-[200px]">
+            <AnimatePresence>
+              {(isShaking || result) && (
+                <motion.div
+                  key="result"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.4 }}
+                  className="w-full flex flex-col items-center justify-center"
+                >
+                  <div className="flex justify-between w-full mb-6">
+                    <div className="flex flex-col items-center w-1/2">
+                      <p className="text-lg mb-4">You</p>
+                      <div className="h-16 flex items-center">
+                        <AnimatePresence mode="wait">
+                          {isShaking ? (
+                            <motion.div
+                              key="shaking-player"
+                              variants={shakeVariant}
+                              initial="rest"
+                              animate="shake"
+                              exit={{ opacity: 0 }}
+                              onAnimationComplete={() => {
+                                if (isShaking) {
+                                  setIsShaking(false)
+                                }
+                              }}
+                            >
+                              <FaHandRock size={48} className="rotate-90" />
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="choice-player"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                            >
+                              {playerChoice &&
+                                choiceIcons[playerChoice]({
+                                  size: 48,
+                                  className:
+                                    playerChoice === "Scissors"
+                                      ? "transform -scale-x-100"
+                                      : "rotate-90",
+                                })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center w-1/2">
+                      <p className="text-lg mb-4">Computer</p>
+                      <div className="h-16 flex items-center">
+                        <AnimatePresence mode="wait">
+                          {isShaking ? (
+                            <motion.div
+                              key="shaking-computer"
+                              variants={shakeVariant}
+                              initial="rest"
+                              animate="shake"
+                              exit={{ opacity: 0 }}
+                            >
+                              <FaHandRock
+                                size={48}
+                                className="transform -scale-x-100 -rotate-90"
+                              />
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="choice-computer"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                            >
+                              {computerChoice &&
+                                choiceIcons[computerChoice]({
+                                  size: 48,
+                                  className:
+                                    computerChoice === "Scissors"
+                                      ? ""
+                                      : "transform -scale-x-100 -rotate-90",
+                                })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="h-12 flex items-center">
+                    {result && (
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className={cn(`text-2xl font-bold`, getStyle(result))}
+                      >
+                        {getText(result)}
+                      </motion.p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="w-full flex justify-center gap-8 mb-8"
           >
-            Reset
-          </button>
-        </motion.div>
-      ) : null}
+            {CHOICES.map((choice) => {
+              const Icon = choiceIcons[choice]
+              return (
+                <motion.button
+                  key={choice}
+                  {...(!isShaking && {
+                    whileHover: {
+                      scale: 1.1,
+                    },
+                    whileTap: { scale: 0.95 },
+                  })}
+                  className={cn(
+                    "bg-neutral-900 hover:bg-neutral-700/50 text-white p-6 rounded-full shadow-md cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-neutral-900 disabled:opacity-50 transition-colors duration-200",
+                    "w-20 h-20 flex items-center justify-center"
+                  )}
+                  onClick={() => playRound(choice)}
+                  aria-label={`Choose ${choice}`}
+                  disabled={isShaking}
+                >
+                  <Icon
+                    size={36}
+                    className={cn(
+                      choice === "Scissors"
+                        ? "transform -scale-x-100"
+                        : "rotate-90"
+                    )}
+                  />
+                </motion.button>
+              )
+            })}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="w-full flex justify-between items-center gap-6"
+          >
+            <button
+              onClick={resetGame}
+              className="px-6 py-3 w-full bg-neutral-700/50 text-neutral-100 rounded hover:bg-neutral-600/50 cursor-pointer"
+            >
+              Reset
+            </button>
+            <div className="flex items-center gap-3">
+              <ToggleSwitch
+                checked={aiMode === "smart"}
+                onChange={(checked) => setAiMode(checked ? "smart" : "random")}
+                label="Smart Mode"
+                id="ai-mode-toggle"
+              />
+              <Tooltip content="In Smart Mode, the computer analyzes your previous choices and selects a move designed to counter them.">
+                <FiInfo className="w-4 h-4 text-neutral-400 hover:text-neutral-200 cursor-pointer" />
+              </Tooltip>
+            </div>
+          </motion.div>
+        </div>
+      </main>
     </div>
   )
 }

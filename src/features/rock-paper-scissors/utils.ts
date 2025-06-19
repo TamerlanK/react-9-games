@@ -51,3 +51,32 @@ export const getText = (result: Result) => {
       return ""
   }
 }
+
+export const getSmartComputerChoice = (history: Choice[]): Choice => {
+  if (history.length === 0) {
+    return CHOICES[Math.floor(Math.random() * CHOICES.length)]
+  }
+
+  const count: Record<Choice, number> = {
+    Rock: 0,
+    Paper: 0,
+    Scissors: 0,
+  }
+
+  for (const choice of history) {
+    count[choice]++
+  }
+
+  const mostFrequent = Object.entries(count).sort(
+    (a, b) => b[1] - a[1]
+  )[0][0] as Choice
+
+  switch (mostFrequent) {
+    case "Rock":
+      return "Paper"
+    case "Paper":
+      return "Scissors"
+    case "Scissors":
+      return "Rock"
+  }
+}
